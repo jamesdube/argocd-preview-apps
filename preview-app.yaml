@@ -1,0 +1,32 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: bgd-pr-testing
+  namespace: argocd
+spec:
+  generators:
+    - pullRequest:
+        github:
+          owner: jamesdube
+          repo: argocd-preview-apps
+          labels:
+            - preview
+        requeueAfterSeconds: 300
+  template:
+    metadata:
+      name: 'preview-app-{{branch}}-{{number}}'
+    spec:
+      source:
+        repoURL: 'https://github.com/jamesdube/argocd-preview-apps'
+        targetRevision: '{{head_sha}}'
+        path: app/overlays/default/
+      project: default
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: 'preview-app-{{branch}}-{{number}}'
